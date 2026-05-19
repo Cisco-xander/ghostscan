@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GhostScan - Web Analysis Module v2
+GhostScan - Web Analysis Module v3
 Crawling, endpoint discovery, JS analysis, Nikto, WhatWeb, WAF detection,
 gobuster/ffuf directory brute-force, WPScan.
 """
@@ -8,6 +8,7 @@ gobuster/ffuf directory brute-force, WPScan.
 import re
 import time
 import json
+import threading
 import concurrent.futures
 from urllib.parse import urljoin, urlparse
 from collections import defaultdict
@@ -104,6 +105,7 @@ class WebAnalysisModule:
 
         self.waf_bypass_engine = waf_bypass_engine
         self.session = self._build_session() if HAS_REQUESTS else None
+        self._lock = threading.Lock()
 
         # Wire WAF bypass into session and adjust rate limit from profile
         if self.session and waf_bypass_engine:
@@ -329,21 +331,24 @@ class WebAnalysisModule:
     def _crawl_all(self):
         queue = [(url, 0) for url in self.base_urls]
         while queue:
-            batch = [item for item in queue[:self.threads] if item[0] not in self.visited]
+            with self._lock:
+                batch = [item for item in queue[:self.threads] if item[0] not in self.visited]
             queue = queue[self.threads:]
             with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as ex:
                 futures = {ex.submit(self._crawl_page, url, depth): (url, depth)
                            for url, depth in batch}
                 for fut in concurrent.futures.as_completed(futures):
                     for new_url, new_depth in fut.result():
-                        if new_url not in self.visited and new_depth <= self.depth:
-                            queue.append((new_url, new_depth))
+                        with self._lock:
+                            if new_url not in self.visited and new_depth <= self.depth:
+                                queue.append((new_url, new_depth))
 
     def _crawl_page(self, url: str, depth: int) -> list:
-        if url in self.visited:
-            return []
-        self.visited.add(url)
-        self.all_endpoints.add(url)
+        with self._lock:
+            if url in self.visited:
+                return []
+            self.visited.add(url)
+            self.all_endpoints.add(url)
         new_links = []
         try:
             resp = self.session.get(url, timeout=self.timeout, verify=False, allow_redirects=True)
@@ -365,16 +370,20 @@ class WebAnalysisModule:
             soup = BeautifulSoup(resp.text, "html.parser")
             for tag in soup.find_all(["a", "link"], href=True):
                 full = urljoin(url, tag["href"])
-                if self._same_domain(url, full) and full not in self.visited:
-                    new_links.append((full, depth + 1))
-                    self.all_endpoints.add(full)
+                with self._lock:
+                    if self._same_domain(url, full) and full not in self.visited:
+                        new_links.append((full, depth + 1))
+                        self.all_endpoints.add(full)
             for form in soup.find_all("form"):
-                self.all_forms.append(self._parse_form(url, form))
+                with self._lock:
+                    self.all_forms.append(self._parse_form(url, form))
             for script in soup.find_all("script", src=True):
                 js_url = urljoin(url, script["src"])
                 if self._same_domain(url, js_url):
-                    self.all_js_files.add(js_url)
-            self._extract_api_endpoints(url, resp.text)
+                    with self._lock:
+                        self.all_js_files.add(js_url)
+            with self._lock:
+                self._extract_api_endpoints(url, resp.text)
         except Exception as e:
             if self.verbose:
                 log(f"    Crawl error {url}: {e}", Colors.DIM)

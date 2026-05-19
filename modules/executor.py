@@ -228,8 +228,6 @@ class SafeExecutor:
                 for name, task in list(pending.items()):
                     if name in completed:
                         continue
-                    if any(name == f_task.name for f_task in futures.values()):
-                        continue  # already running
 
                     # Skip if critical dependency failed
                     if any(dep in failed_critical for dep in task.depends_on):

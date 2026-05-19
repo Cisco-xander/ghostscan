@@ -25,7 +25,6 @@ ghostscan_results/*.json
 session_*.json
 ghostscan_results/*.pdf
 ghostscan_results/*.html
-session_*.json
 
 # ── Temp files ───────────────────────────────────────────────────────────────
 /tmp/ghostscan_wordlists/

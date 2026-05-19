@@ -465,7 +465,6 @@ class HeadlessBrowser:
                 return maps;
             }""")
 
-            import aiohttp
             for map_url in map_refs[:10]:
                 try:
                     resp = await page.request.get(map_url)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GhostScan - Reporting Module v2
+GhostScan - Reporting Module v3
 Outputs: Markdown, HTML, JSON, PDF (via ReportLab or WeasyPrint).
 """
 

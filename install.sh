@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════
-#  GhostScan v2.0 — Installer for Kali Linux / Debian / Ubuntu
+#  GhostScan v3.0 — Installer for Kali Linux / Debian / Ubuntu
 #  Usage: sudo bash install.sh [--full] [--no-wordlists] [--no-gpu]
 # ═══════════════════════════════════════════════════════════════════════════
 set -euo pipefail
@@ -71,7 +71,7 @@ if [[ -f /etc/os-release ]]; then
   DISTRO="${ID,,}"
 fi
 
-section "GhostScan v2.0 Installer"
+section "GhostScan v3.0 Installer"
 info "Distro detected: $DISTRO"
 info "Install directory: $INSTALL_DIR"
 
@@ -84,7 +84,7 @@ apt-get update -qq 2>/dev/null || warn "apt-get update failed (continuing)"
 section "Core System Packages"
 CORE_PKGS=(
   python3 python3-pip python3-venv python3-dev
-  curl wget git unzip gunzip tar
+  curl wget git unzip gzip tar
   build-essential libssl-dev libffi-dev
   net-tools iputils-ping dnsutils whois
 )
@@ -507,7 +507,7 @@ fi
 # ── FINAL INSTRUCTIONS ────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${GRN}╔══════════════════════════════════════════════════╗${RST}"
-echo -e "${BOLD}${GRN}║         GhostScan v2.0 — Install Complete!       ║${RST}"
+echo -e "${BOLD}${GRN}║         GhostScan v3.0 — Install Complete!       ║${RST}"
 echo -e "${BOLD}${GRN}╚══════════════════════════════════════════════════╝${RST}"
 echo ""
 echo -e "${CYN}Quick Start:${RST}"
